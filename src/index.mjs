@@ -14,7 +14,7 @@ fastify.get('/', async (request, reply) => {
   const downloadPromises = dataStructure.models.map(async model => {
     log('info', `Started downloading files of ${model.url}`);
     await downloadFromHub(`../weights/${model.name}`, model.modelRepoOrPath);
-    log('success', `Finished downloading files of ${model.url}`);
+    log('success', `🎉 Finished downloading files of ${model.url}`);
   });
 
   await Promise.all(downloadPromises);

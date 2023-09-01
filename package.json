@@ -14,9 +14,6 @@
     "@huggingface/hub": "^0.8.4",
     "fastify": "^4.22.1",
     "linkify-it": "^4.0.1",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
     "chalk": "^5.3.0"
   }
 }
