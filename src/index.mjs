@@ -2,9 +2,15 @@ import { downloadFromHub } from './controllers/downloadFiles.mjs';
 import { buildDataStructure } from './utils/hgDataStructure.mjs';
 import { fetchPageAndExtractURLs } from './utils/extractUrlsFromPage.mjs';
 import { log } from './utils/logger.mjs';
-import fastify from 'fastify'
+import fastify from 'fastify';
+import promiseLimitter from "./utils/concurrency-limit/promise-limitter.mjs"
+import { config as dotenvConfig } from 'dotenv';
 
-const server = fastify()
+dotenvConfig();
+const server = fastify();
+console.log(process.env.MODEL_DOWNLOAD_CONCURRENCY)
+const downloadConcurrency = parseInt(process.env.MODEL_DOWNLOAD_CONCURRENCY) || 3;
+const limit = promiseLimitter(downloadConcurrency);
 
 server.get('/', async (request, reply) => {
   try {
@@ -13,13 +19,16 @@ server.get('/', async (request, reply) => {
     log('info', 'Starting model downloads');
 
     const downloadPromises = dataStructure.models.map(model => {
-      return downloadFromHub(`./weights/${model.name}`, model.modelRepoOrPath)
-        .then(() => {
-          log('success', `Finished downloading files of ${model.url}`);
-        })
-        .catch(() => {
-          log('error', `Error downloading files of ${model.url}`);
-        });
+      return limit(() => {
+        log('info', `Started downloading files of ${model.url}`);
+        return downloadFromHub(`./weights/${model.name}`, model.modelRepoOrPath)
+          .then(() => {
+            log('success', `Finished downloading files of ${model.url}`);
+          })
+          .catch(() => {
+            log('error', `Error downloading files of ${model.url}`);
+          });
+      });
     });
 
     const results = await Promise.allSettled(downloadPromises);
@@ -38,12 +47,12 @@ server.get('/', async (request, reply) => {
   }
 });
 
-
 server.listen({ port: 8080 }, (err, address) => {
   if (err) {
-    console.error(err)
-    process.exit(1)
+    console.error(err);
+    process.exit(1);
   }
 
-  console.log(`Server listening at ${address}`)
-})
+  console.log(`Server listening at ${address}`);
+});
+

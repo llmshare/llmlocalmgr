@@ -12,8 +12,9 @@
   "license": "ISC",
   "dependencies": {
     "@huggingface/hub": "^0.8.4",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.3.1",
     "fastify": "^4.22.1",
-    "linkify-it": "^4.0.1",
-    "chalk": "^5.3.0"
+    "linkify-it": "^4.0.1"
   }
 }
