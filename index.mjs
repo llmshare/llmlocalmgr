@@ -43,7 +43,7 @@ function buildDataStructure(huggingFaceURLs) {
 
 async function downloadFromHub(targetDir, modelRepoOrPath, revision) {
   const files = await listFiles({ repo: modelRepoOrPath, recursive: true, revision });
-  console.log(modelRepoOrPath,files)
+  console.log(modelRepoOrPath, files);
 
   await mkdir(targetDir, { recursive: true });
   try {
@@ -52,19 +52,19 @@ async function downloadFromHub(targetDir, modelRepoOrPath, revision) {
         continue;
       }
 
-      console.log(`Downloading ${modelRepoOrPath} - ${file.path}...`);
       const response = await downloadFile({ repo: modelRepoOrPath, path: file.path, revision });
+      console.log(`Downloaded ${modelRepoOrPath} - ${file.path}...`);
       if (!response?.body) {
         throw new Error(`Error downloading ${file.path}`);
       }
 
-      const targetFile = targetDir + '/' + file.path;
+      const targetFile = `${targetDir}/${file.path}`;
       const targetPath = dirname(targetFile);
       if (!await fileExists(targetPath)) {
         await mkdir(targetPath, { recursive: true });
       }
 
-      const writeStream = createWriteStream(targetDir + '/' + file.path);
+      const writeStream = createWriteStream(targetFile);
       await pipelineAsync(response.body, writeStream);
     }
   } catch (e) {
@@ -76,12 +76,16 @@ async function downloadFromHub(targetDir, modelRepoOrPath, revision) {
 fastify.get('/', async (request, reply) => {
   const huggingFaceURLs = await fetchPageAndExtractURLs();
   const dataStructure = buildDataStructure(huggingFaceURLs);
-  console.log(dataStructure)
-  for (const model of dataStructure.models) {
-    console.log("Started downloading files of ", model.url)
+  console.log(dataStructure);
+
+  const downloadPromises = dataStructure.models.map(async model => {
+    console.log(`Started downloading files of ${model.url}`);
     await downloadFromHub(`./weights/${model.name}`, model.modelRepoOrPath);
-    console.log("Finished downloading files of", model.url)
-  }
+    console.log(`Finished downloading files of ${model.url}`);
+  });
+
+  await Promise.all(downloadPromises);
+
   reply.send('Weights downloaded successfully');
 });
 
