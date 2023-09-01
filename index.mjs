@@ -35,6 +35,7 @@ function buildDataStructure(huggingFaceURLs) {
     models: huggingFaceURLs.map(url => ({
       url,
       name: url.split('/').pop() || '',
+      modelRepoOrPath: url.split('/').slice(-2).join('/')
     })),
   };
   return dataStructure;
@@ -77,9 +78,9 @@ fastify.get('/', async (request, reply) => {
   const dataStructure = buildDataStructure(huggingFaceURLs);
   console.log(dataStructure)
   for (const model of dataStructure.models) {
-    console.log("started downloading files", model.url)
-    await downloadFromHub(`./weights/${model.name}`, model.url.split('/').slice(-2).join('/'));
-    console.log("finished downloading files", model.url)
+    console.log("Started downloading files of ", model.url)
+    await downloadFromHub(`./weights/${model.name}`, model.modelRepoOrPath);
+    console.log("Finished downloading files of", model.url)
   }
   reply.send('Weights downloaded successfully');
 });
