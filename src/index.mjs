@@ -13,7 +13,7 @@ server.get('/', async (request, reply) => {
     log('info', 'Starting model downloads');
 
     const downloadPromises = dataStructure.models.map(model => {
-      return downloadFromHub(`../weights/${model.name}`, model.modelRepoOrPath)
+      return downloadFromHub(`./weights/${model.name}`, model.modelRepoOrPath)
         .then(() => {
           log('success', `Finished downloading files of ${model.url}`);
         })
