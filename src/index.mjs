@@ -1,32 +1,49 @@
-import Fastify from 'fastify';
 import { downloadFromHub } from './controllers/downloadFiles.mjs';
 import { buildDataStructure } from './utils/hgDataStructure.mjs';
 import { fetchPageAndExtractURLs } from './utils/extractUrlsFromPage.mjs';
 import { log } from './utils/logger.mjs';
+import fastify from 'fastify'
 
-const fastify = Fastify();
+const server = fastify()
 
-fastify.get('/', async (request, reply) => {
-  const huggingFaceURLs = await fetchPageAndExtractURLs();
-  const dataStructure = buildDataStructure(huggingFaceURLs);
-  log('info', 'Starting model downloads');
+server.get('/', async (request, reply) => {
+  try {
+    const huggingFaceURLs = await fetchPageAndExtractURLs();
+    const dataStructure = buildDataStructure(huggingFaceURLs);
+    log('info', 'Starting model downloads');
 
-  const downloadPromises = dataStructure.models.map(async model => {
-    log('info', `Started downloading files of ${model.url}`);
-    await downloadFromHub(`../weights/${model.name}`, model.modelRepoOrPath);
-    log('success', `🎉 Finished downloading files of ${model.url}`);
-  });
+    const downloadPromises = dataStructure.models.map(model => {
+      return downloadFromHub(`../weights/${model.name}`, model.modelRepoOrPath)
+        .then(() => {
+          log('success', `Finished downloading files of ${model.url}`);
+        })
+        .catch(() => {
+          log('error', `Error downloading files of ${model.url}`);
+        });
+    });
 
-  await Promise.all(downloadPromises);
+    const results = await Promise.allSettled(downloadPromises);
+    const failedDownloads = results.filter(result => result.status === 'rejected');
 
-  log('success', 'Weights downloaded successfully');
-  reply.send('Weights downloaded successfully');
-});
-
-fastify.listen(3000, (err, address) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
+    if (failedDownloads.length > 0) {
+      log('error', `${failedDownloads.length} model(s) failed to download.`);
+      reply.send(`${failedDownloads.length} model(s) failed to download.`);
+    } else {
+      log('success', 'Weights downloaded successfully');
+      reply.send('Weights downloaded successfully');
+    }
+  } catch (error) {
+    log('error', 'An error occurred');
+    reply.send('An error occurred');
   }
-  console.log(`Server listening at ${address}`);
 });
+
+
+server.listen({ port: 8080 }, (err, address) => {
+  if (err) {
+    console.error(err)
+    process.exit(1)
+  }
+
+  console.log(`Server listening at ${address}`)
+})
