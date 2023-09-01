@@ -1,0 +1,20 @@
+{
+  "name": "llmlocalmgr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p tsconfig.json",
+    "start": "node index.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@huggingface/hub": "^0.8.4",
+    "fastify": "^4.22.1",
+    "linkify-it": "^4.0.1",
+    "node-fetch": "^3.3.2"
+  }
+}
