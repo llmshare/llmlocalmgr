@@ -5,11 +5,11 @@ import { log } from './utils/logger.mjs';
 import fastify from 'fastify';
 import promiseLimitter from "./utils/concurrency-limit/promise-limitter.mjs"
 import { config as dotenvConfig } from 'dotenv';
+import { buildMLCLocalConfig } from './controllers/buildMLCLocalConfig.mjs';
 
 dotenvConfig();
 const server = fastify();
-console.log(process.env.MODEL_DOWNLOAD_CONCURRENCY)
-const downloadConcurrency = parseInt(process.env.MODEL_DOWNLOAD_CONCURRENCY) || 3;
+const downloadConcurrency = parseInt(process.env.MODEL_DOWNLOAD_CONCURRENCY) || 4;
 const limit = promiseLimitter(downloadConcurrency);
 
 server.get('/', async (request, reply) => {
@@ -47,7 +47,13 @@ server.get('/', async (request, reply) => {
   }
 });
 
-server.listen({ port: 8080 }, (err, address) => {
+server.get('/model-config', async (request, reply) => {
+  const huggingFaceURLs = await fetchPageAndExtractURLs();
+  const config = buildMLCLocalConfig(huggingFaceURLs);
+  reply.send(config);
+});
+
+server.listen({ port: process.env.HOST_PORT || 8000 }, (err, address) => {
   if (err) {
     console.error(err);
     process.exit(1);
