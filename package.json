@@ -12,9 +12,11 @@
   "license": "ISC",
   "dependencies": {
     "@huggingface/hub": "^0.8.4",
+    "better-sqlite3": "^8.6.0",
     "chalk": "^5.3.0",
     "commander": "^11.0.0",
     "dotenv": "^16.3.1",
+    "drizzle-orm": "^0.28.6",
     "fastify": "^4.22.1",
     "linkify-it": "^4.0.1"
   }
